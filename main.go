@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-    c := make(chan Player, 3)
+    c := make(chan Player)
 
     btags := [3]string{"Tydra#11863", "heckoffnerd#1772", "Thomas#11515"}
 
@@ -16,7 +16,7 @@ func main() {
         }(btag)
     }
     
-    for p := range c {
-        fmt.Println(p)
+    for _ = range btags {
+        fmt.Println(<-c)
     }
 }
