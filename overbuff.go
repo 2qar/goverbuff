@@ -13,6 +13,7 @@ import (
 )
 
 type Player struct {
+    BTag    string
     SR      int
     Roles   map[string]int
 }
@@ -138,7 +139,9 @@ func GetPlayer(btag string) (Player, error) {
     }
     defer resp.Body.Close()
 
-    return parsePlayer(resp.Body), nil
+    p := parsePlayer(resp.Body)
+    p.BTag = btag
+    return p, nil
 }
 
 /*
