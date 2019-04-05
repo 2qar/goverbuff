@@ -48,6 +48,7 @@ func getPlayerInfo(activeIDs []string, p player, captain bool) playerInfo {
     return playerInfo{active, p.IGN, stats}
 } 
 
+// TODO: call GetPlayer here with goroutines and pass result to getPlayerInfo, maybe rename getPlayerInfo to parsePlayerInfo
 func (m *match) Team() (teamInfo, error) {
     var t team
     if m.Pos == "top" {
