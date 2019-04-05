@@ -12,6 +12,7 @@ import (
     "regexp"
 )
 
+// TODO: Rename to "Stats" or smth to avoid collision with "player" in scraper.go
 type Player struct {
     BTag    string
     SR      int
