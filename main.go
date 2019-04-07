@@ -5,7 +5,7 @@ import (
 )
 
 func testGetTeam() {
-	c := make(chan Player)
+	c := make(chan PlayerStats)
 
 	btags := []string{
 		"Tydra#11863",

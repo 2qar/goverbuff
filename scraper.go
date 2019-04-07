@@ -167,7 +167,7 @@ type teamInfo struct {
 type playerInfo struct {
 	Active bool
 	Name   string
-	Stats  Player
+	Stats  PlayerStats
 }
 
 // Find a match in the given round where a team with the given id is playing
