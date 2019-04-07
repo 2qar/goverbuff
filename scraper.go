@@ -46,7 +46,7 @@ func getPlayerInfo(activeIDs []string, p player, captain bool) playerInfo {
 	}
 
 	stats, _ := GetPlayer(p.Btag())
-	return playerInfo{active, p.IGN, stats}
+	return playerInfo{active, p.User.Name, stats}
 }
 
 func (m *match) Team() (teamInfo, error) {
@@ -56,7 +56,6 @@ func (m *match) Team() (teamInfo, error) {
 	} else {
 		t = m.Bottom
 	}
-	fmt.Println("players:", len(t.Info.Players))
 
 	resp, err := http.Get(cloudfront + "persistent-teams/" + t.Info.PID)
 	if err != nil {
@@ -70,7 +69,6 @@ func (m *match) Team() (teamInfo, error) {
 		return teamInfo{}, err
 	}
 	pt := pts[0]
-	fmt.Println("persistent players:", len(pt.Players))
 
 	var activeIDs []string
 	ids := t.Info.ActiveIDS
@@ -137,21 +135,24 @@ type persistentTeam struct {
 }
 
 type player struct {
-	ID    string `json:"_id"`
-	PID   string `json:"persistentPlayerID"`
-	IGN   string `json:"inGameName"`
-	Accts struct {
-		Bnet struct {
-			Btag string `json:"battletag"`
-		} `'json:"battlenet"`
-	} `json:"accounts"`
+	ID   string `json:"_id"`
+	PID  string `json:"persistentPlayerID"`
+	IGN  string `json:"inGameName"`
+	User struct {
+		Name  string `json:"username"`
+		Accts struct {
+			Bnet struct {
+				Btag string `json:"battletag"`
+			} `'json:"battlenet"`
+		} `json:"accounts"`
+	} `json:"user"`
 }
 
 func (p *player) Btag() string {
 	if p.IGN != "" {
 		return p.IGN
-	} else if p.Accts.Bnet.Btag != "" {
-		return p.Accts.Bnet.Btag
+	} else if p.User.Accts.Bnet.Btag != "" {
+		return p.User.Accts.Bnet.Btag
 	}
 	return ""
 }
