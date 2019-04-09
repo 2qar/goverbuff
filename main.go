@@ -31,8 +31,7 @@ func testGetTeam() {
 	}
 }
 
-func main() {
-	//fmt.Println(GetMatch("5bf8b741b06aae03a9f18385", "5bfe1b9418ddd9114f14efb0", 1))
+func testGetOtherTeam() {
 	teamInfo, err := GetOtherTeam("https://battlefy.com/overwatch-open-division-north-america/2019-overwatch-open-division-season-2-north-america/5c7ccfe88d004d0345bbd0cd/stage/5c929d720bc67d0345180aa6", "5bfe1b9418ddd9114f14efb0", 1)
 	if err != nil {
 		panic(err)
@@ -41,4 +40,19 @@ func main() {
 	for _, p := range teamInfo.Players {
 		fmt.Println(p)
 	}
+
+}
+
+func testTeamSearch() {
+	t, err := FindTeam("5c7ccfe88d004d0345bbd0cd", "vixen")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(t)
+}
+
+func main() {
+	//fmt.Println(GetMatch("5bf8b741b06aae03a9f18385", "5bfe1b9418ddd9114f14efb0", 1))
+	//testGetOtherTeam()
+	testTeamSearch()
 }

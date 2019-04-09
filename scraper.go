@@ -13,6 +13,31 @@ const (
 	cloudfront = "https://dtmwra1jsgyb0.cloudfront.net/"
 )
 
+func FindTeam(tournamentID, name string) (teamInfo, error) {
+	url := cloudfront + "tournaments/" + tournamentID + "/" + "teams?name=" + name
+	resp, err := http.Get(url)
+	if err != nil {
+		return teamInfo{}, err
+	}
+	defer resp.Body.Close()
+
+	var teams []teamData
+	err = json.NewDecoder(resp.Body).Decode(&teams)
+	if err != nil {
+		return teamInfo{}, err
+	}
+	if len(teams) == 0 {
+		return teamInfo{}, errors.New(fmt.Sprintf("unable to find team \"%s\"", name))
+	}
+
+	info, err := getTeamInfo(teams[0])
+	if err != nil {
+		return teamInfo{}, nil
+	}
+
+	return info, nil
+}
+
 // Get information on the enemy team in a round of Open Division
 func GetOtherTeam(tournamentLink, teamID string, round int) (teamInfo, error) {
 	cutIndex := strings.LastIndex(tournamentLink, "/") + 1
@@ -23,8 +48,7 @@ func GetOtherTeam(tournamentLink, teamID string, round int) (teamInfo, error) {
 		return teamInfo{}, err
 	}
 
-	var info teamInfo
-	info, err = m.Team()
+	info, err := getTeamInfo(m.Team().Info)
 	if err != nil {
 		return info, err
 	}
@@ -49,15 +73,8 @@ func getPlayerInfo(activeIDs []string, p player, captain bool) playerInfo {
 	return playerInfo{active, p.User.Name, stats}
 }
 
-func (m *match) Team() (teamInfo, error) {
-	var t team
-	if m.Pos == "top" {
-		t = m.Top
-	} else {
-		t = m.Bottom
-	}
-
-	resp, err := http.Get(cloudfront + "persistent-teams/" + t.Info.PID)
+func getTeamInfo(t teamData) (teamInfo, error) {
+	resp, err := http.Get(cloudfront + "persistent-teams/" + t.PID)
 	if err != nil {
 		return teamInfo{}, err
 	}
@@ -71,8 +88,8 @@ func (m *match) Team() (teamInfo, error) {
 	pt := pts[0]
 
 	var activeIDs []string
-	ids := t.Info.ActiveIDS
-	for _, p := range t.Info.Players {
+	ids := t.ActiveIDS
+	for _, p := range t.Players {
 		for i, id := range ids {
 			if id == p.ID {
 				activeIDs = append(activeIDs, p.PID)
@@ -115,16 +132,29 @@ type match struct {
 	Bottom team `json:"bottom"`
 }
 
+func (m *match) Team() team {
+	var t team
+	if m.Pos == "top" {
+		t = m.Top
+	} else {
+		t = m.Bottom
+	}
+	return t
+}
+
 type team struct {
-	ID   string `json:"teamID"`
-	Info struct {
-		ActiveIDS []string `json:"playerIDs"`
-		PID       string   `json:"persistentTeamID"`
-		Players   []struct {
-			ID  string `json:"_id"`
-			PID string `json:"persistentPlayerID"`
-		} `json:"players"`
-	} `json:"team"`
+	ID             string         `json:"teamID"`
+	Info           teamData       `json:"team"`
+	PersistentTeam persistentTeam `json:"persistentTeam"`
+}
+
+type teamData struct {
+	ActiveIDS []string `json:"playerIDs"`
+	PID       string   `json:"persistentTeamID"`
+	Players   []struct {
+		ID  string `json:"_id"`
+		PID string `json:"persistentPlayerID"`
+	} `json:"players"`
 }
 
 type persistentTeam struct {
