@@ -13,39 +13,39 @@ const (
 	cloudfront = "https://dtmwra1jsgyb0.cloudfront.net/"
 )
 
-func FindTeam(tournamentID, name string) (teamInfo, error) {
+func FindTeam(tournamentID, name string) (TeamInfo, error) {
 	url := cloudfront + "tournaments/" + tournamentID + "/" + "teams?name=" + name
 	resp, err := http.Get(url)
 	if err != nil {
-		return teamInfo{}, err
+		return TeamInfo{}, err
 	}
 	defer resp.Body.Close()
 
 	var teams []teamData
 	err = json.NewDecoder(resp.Body).Decode(&teams)
 	if err != nil {
-		return teamInfo{}, err
+		return TeamInfo{}, err
 	}
 	if len(teams) == 0 {
-		return teamInfo{}, errors.New(fmt.Sprintf("unable to find team \"%s\"", name))
+		return TeamInfo{}, errors.New(fmt.Sprintf("unable to find team \"%s\"", name))
 	}
 
 	info, err := getTeamInfo(teams[0])
 	if err != nil {
-		return teamInfo{}, nil
+		return TeamInfo{}, nil
 	}
 
 	return info, nil
 }
 
 // Get information on the enemy team in a round of Open Division
-func GetOtherTeam(tournamentLink, teamID string, round int) (teamInfo, error) {
+func GetOtherTeam(tournamentLink, teamID string, round int) (TeamInfo, error) {
 	cutIndex := strings.LastIndex(tournamentLink, "/") + 1
 	stageID := tournamentLink[cutIndex:]
 
 	m, err := GetMatch(stageID, teamID, round)
 	if err != nil {
-		return teamInfo{}, err
+		return TeamInfo{}, err
 	}
 
 	info, err := getTeamInfo(m.Team().Info)
@@ -57,7 +57,7 @@ func GetOtherTeam(tournamentLink, teamID string, round int) (teamInfo, error) {
 	return info, nil
 }
 
-func getPlayerInfo(activeIDs []string, p player, captain bool) playerInfo {
+func getPlayerInfo(activeIDs []string, p player, captain bool) PlayerInfo {
 	active := captain
 	if !captain {
 		for i, id := range activeIDs {
@@ -70,20 +70,20 @@ func getPlayerInfo(activeIDs []string, p player, captain bool) playerInfo {
 	}
 
 	stats, _ := GetPlayer(p.Btag())
-	return playerInfo{active, p.User.Name, stats}
+	return PlayerInfo{active, p.User.Name, stats}
 }
 
-func getTeamInfo(t teamData) (teamInfo, error) {
+func getTeamInfo(t teamData) (TeamInfo, error) {
 	resp, err := http.Get(cloudfront + "persistent-teams/" + t.PID)
 	if err != nil {
-		return teamInfo{}, err
+		return TeamInfo{}, err
 	}
 	defer resp.Body.Close()
 
 	var pts [1]persistentTeam
 	err = json.NewDecoder(resp.Body).Decode(&pts)
 	if err != nil {
-		return teamInfo{}, err
+		return TeamInfo{}, err
 	}
 	pt := pts[0]
 
@@ -101,7 +101,7 @@ func getTeamInfo(t teamData) (teamInfo, error) {
 
 	var wg sync.WaitGroup
 	wg.Add(len(pt.Players) + 1)
-	pCh := make(chan playerInfo, len(pt.Players)+1)
+	pCh := make(chan PlayerInfo, len(pt.Players)+1)
 
 	getPlayer := func(p player, captain bool) {
 		defer wg.Done()
@@ -117,12 +117,12 @@ func getTeamInfo(t teamData) (teamInfo, error) {
 	wg.Wait()
 	close(pCh)
 
-	var players []playerInfo
+	var players []PlayerInfo
 	for i := 0; i < len(pt.Players)+1; i++ {
 		players = append(players, <-pCh)
 	}
 
-	return teamInfo{"", pt.Name, pt.Logo, players}, nil
+	return TeamInfo{"", pt.Name, pt.Logo, players}, nil
 }
 
 type match struct {
@@ -187,14 +187,14 @@ func (p *player) Btag() string {
 	return ""
 }
 
-type teamInfo struct {
+type TeamInfo struct {
 	MatchLink string
 	Name      string
 	Logo      string
-	Players   []playerInfo
+	Players   []PlayerInfo
 }
 
-type playerInfo struct {
+type PlayerInfo struct {
 	Active bool
 	Name   string
 	Stats  PlayerStats
