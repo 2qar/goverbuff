@@ -11,12 +11,15 @@ import (
 	"strings"
 )
 
+// PlayerStats stores info on a player scraped from Overbuff
 type PlayerStats struct {
 	BTag  string
 	SR    int
 	Roles map[string]int
 }
 
+// GetMain returns a player's main role.
+// A player's main role here is the role they have the most wins on.
 func (p *PlayerStats) GetMain() string {
 	var topRole string
 	var topWins int
@@ -126,6 +129,7 @@ func parsePlayer(r io.Reader) (p PlayerStats) {
 	return
 }
 
+// GetPlayer returns stats on a player scraped from Overbuff
 func GetPlayer(btag string) (PlayerStats, error) {
 	if match, _ := regexp.MatchString("\\w{1,}#\\d{3,5}", btag); !match {
 		return PlayerStats{}, errors.New("invalid btag")
@@ -136,7 +140,7 @@ func GetPlayer(btag string) (PlayerStats, error) {
 	if err != nil {
 		return PlayerStats{}, err
 	} else if resp.StatusCode == 404 {
-		return PlayerStats{}, errors.New(fmt.Sprintf("%d", resp.StatusCode))
+		return PlayerStats{}, errors.Errorf("%d", resp.StatusCode)
 	}
 	defer resp.Body.Close()
 

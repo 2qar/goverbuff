@@ -13,6 +13,7 @@ const (
 	cloudfront = "https://dtmwra1jsgyb0.cloudfront.net/"
 )
 
+// FindTeam returns info on a team in the given tournament, or an error if they aren't found
 func FindTeam(tournamentID, name string) (TeamInfo, error) {
 	url := cloudfront + "tournaments/" + tournamentID + "/" + "teams?name=" + name
 	resp, err := http.Get(url)
@@ -27,7 +28,7 @@ func FindTeam(tournamentID, name string) (TeamInfo, error) {
 		return TeamInfo{}, err
 	}
 	if len(teams) == 0 {
-		return TeamInfo{}, errors.New(fmt.Sprintf("unable to find team \"%s\"", name))
+		return TeamInfo{}, errors.Errorf("unable to find team \"%s\"", name)
 	}
 
 	info, err := getTeamInfo(teams[0])
@@ -38,7 +39,7 @@ func FindTeam(tournamentID, name string) (TeamInfo, error) {
 	return info, nil
 }
 
-// Get information on the enemy team in a round of Open Division
+// GetOtherTeam get information on the enemy team in a round of Open Division
 func GetOtherTeam(tournamentLink, teamID string, round int) (TeamInfo, error) {
 	cutIndex := strings.LastIndex(tournamentLink, "/") + 1
 	stageID := tournamentLink[cutIndex:]
@@ -187,6 +188,7 @@ func (p *player) Btag() string {
 	return ""
 }
 
+// TeamInfo stores info about a team scraped from Battlefy, including stats about their players
 type TeamInfo struct {
 	MatchLink string
 	Name      string
@@ -194,6 +196,8 @@ type TeamInfo struct {
 	Players   []PlayerInfo
 }
 
+// PlayerInfo stores info about a player in the context of a Battlefy team.
+// In addition to their Overbuff stats, it stores whether they're on the active roster or not and their Battlefy username.
 type PlayerInfo struct {
 	Active bool
 	Name   string
