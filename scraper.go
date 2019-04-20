@@ -43,7 +43,7 @@ func GetOtherTeam(tournamentLink, teamID string, round int) (TeamInfo, error) {
 	cutIndex := strings.LastIndex(tournamentLink, "/") + 1
 	stageID := tournamentLink[cutIndex:]
 
-	m, err := GetMatch(stageID, teamID, round)
+	m, err := getMatch(stageID, teamID, round)
 	if err != nil {
 		return TeamInfo{}, err
 	}
@@ -201,7 +201,7 @@ type PlayerInfo struct {
 }
 
 // Find a match in the given round where a team with the given id is playing
-func GetMatch(stageID, teamID string, round int) (match, error) {
+func getMatch(stageID, teamID string, round int) (match, error) {
 	matchesLink := fmt.Sprintf(cloudfront+"stages/%s/rounds/%d/matches", stageID, round)
 
 	resp, err := http.Get(matchesLink)
