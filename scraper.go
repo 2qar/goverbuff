@@ -1,4 +1,4 @@
-package main
+package odscraper
 
 import (
 	"encoding/json"
