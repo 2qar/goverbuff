@@ -40,7 +40,7 @@ func TestGetPlayerMain(t *testing.T) {
 
 func TestGetFakePlayer(t *testing.T) {
 	_, err := GetPlayer("TheresNoWayAnybodyHasThisName#1234")
-	if err.Error() != "404" {
+	if !IsNotFound(err) {
 		t.Error(err)
 	}
 }

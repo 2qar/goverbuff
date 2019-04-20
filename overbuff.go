@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // PlayerStats stores info on a player scraped from Overbuff
@@ -129,22 +130,32 @@ func parsePlayer(r io.Reader) (p PlayerStats) {
 	return
 }
 
-// GetPlayer returns stats on a player scraped from Overbuff
-func GetPlayer(btag string) (PlayerStats, error) {
+// IsNotFound checks if an error produced by GetPlayer is a 404 error
+func IsNotFound(err error) bool {
+	return strings.HasPrefix(err.Error(), "player \"")
+}
+
+func getPlayer(c *http.Client, btag string) (PlayerStats, error) {
 	if match, _ := regexp.MatchString("\\w{1,}#\\d{3,5}", btag); !match {
 		return PlayerStats{}, errors.New("invalid btag")
 	}
 
 	validTag := strings.Replace(btag, "#", "-", 1)
-	resp, err := http.Get(fmt.Sprintf("https://www.overbuff.com/players/pc/%s", validTag))
+	resp, err := c.Get(fmt.Sprintf("https://www.overbuff.com/players/pc/%s", validTag))
 	if err != nil {
 		return PlayerStats{}, err
-	} else if resp.StatusCode == 404 {
-		return PlayerStats{}, fmt.Errorf("%d", resp.StatusCode)
+	} else if resp.StatusCode == 404 || resp.StatusCode == 408 {
+		return PlayerStats{}, fmt.Errorf("player \"%s\" not found", btag)
 	}
 	defer resp.Body.Close()
 
 	p := parsePlayer(resp.Body)
 	p.BTag = btag
 	return p, nil
+}
+
+// GetPlayer returns stats on a player scraped from Overbuff
+func GetPlayer(btag string) (p PlayerStats, err error) {
+	p, err = getPlayer(&http.Client{Timeout: 5 * time.Second}, btag)
+	return
 }
