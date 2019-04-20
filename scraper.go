@@ -28,7 +28,7 @@ func FindTeam(tournamentID, name string) (TeamInfo, error) {
 		return TeamInfo{}, err
 	}
 	if len(teams) == 0 {
-		return TeamInfo{}, errors.Errorf("unable to find team \"%s\"", name)
+		return TeamInfo{}, fmt.Errorf("unable to find team \"%s\"", name)
 	}
 
 	info, err := getTeamInfo(teams[0])

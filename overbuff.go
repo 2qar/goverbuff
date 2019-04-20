@@ -140,7 +140,7 @@ func GetPlayer(btag string) (PlayerStats, error) {
 	if err != nil {
 		return PlayerStats{}, err
 	} else if resp.StatusCode == 404 {
-		return PlayerStats{}, errors.Errorf("%d", resp.StatusCode)
+		return PlayerStats{}, fmt.Errorf("%d", resp.StatusCode)
 	}
 	defer resp.Body.Close()
 
