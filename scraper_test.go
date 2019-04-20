@@ -13,10 +13,11 @@ var (
 )
 
 func TestFindTeam(t *testing.T) {
-	_, err := FindTeam(tournamentID, "Vixen")
+	team, err := FindTeam(tournamentID, "Vixen")
 	if err != nil {
 		t.Error(err)
 	}
+	t.Log(team)
 }
 
 func TestFindInvalidTeam(t *testing.T) {
@@ -27,8 +28,10 @@ func TestFindInvalidTeam(t *testing.T) {
 }
 
 func TestGetOtherTeam(t *testing.T) {
-	_, err := GetOtherTeam(tournamentLink, teamID, 1)
+	e, err := GetOtherTeam(tournamentLink, teamID, 1)
 	if err != nil {
 		t.Error(err)
+	} else if e.MatchLink == "" {
+		t.Error("no match link")
 	}
 }
