@@ -135,6 +135,8 @@ func GetPlayer(btag string) (PlayerStats, error) {
 	resp, err := http.Get(fmt.Sprintf("https://www.overbuff.com/players/pc/%s", validTag))
 	if err != nil {
 		return PlayerStats{}, err
+	} else if resp.StatusCode == 404 {
+		return PlayerStats{}, errors.New(fmt.Sprintf("%d", resp.StatusCode))
 	}
 	defer resp.Body.Close()
 
