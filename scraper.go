@@ -70,7 +70,8 @@ func getPlayerInfo(activeIDs []string, p player, captain bool) PlayerInfo {
 		}
 	}
 
-	stats, _ := GetPlayer(p.Btag())
+	c := saneClient()
+	stats, _ := CGetPlayer(c, p.Btag())
 	return PlayerInfo{active, p.User.Name, stats}
 }
 

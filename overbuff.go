@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // PlayerStats stores info on a player scraped from Overbuff
@@ -156,6 +155,12 @@ func getPlayer(c *http.Client, btag string) (PlayerStats, error) {
 
 // GetPlayer returns stats on a player scraped from Overbuff
 func GetPlayer(btag string) (p PlayerStats, err error) {
-	p, err = getPlayer(&http.Client{Timeout: 5 * time.Second}, btag)
+	p, err = getPlayer(saneClient(), btag)
+	return
+}
+
+// CGetPlayer functions the same as GetPlayer, but it takes also takes an http.Client
+func CGetPlayer(c *http.Client, btag string) (p PlayerStats, err error) {
+	p, err = getPlayer(c, btag)
 	return
 }
