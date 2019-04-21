@@ -12,16 +12,26 @@ var (
 	tournamentLink = "https://battlefy.com/overwatch-open-division-north-america/2019-overwatch-open-division-season-2-north-america/5c7ccfe88d004d0345bbd0cd/stage/5c929d720bc67d0345180aa6"
 )
 
-func TestFindTeam(t *testing.T) {
-	team, err := FindTeam(tournamentID, "Vixen")
+func TestFindOneTeam(t *testing.T) {
+	var team TeamInfo
+	_, err := FindTeam(tournamentID, "Vixen", &team)
+	if err != nil {
+		t.Error(err)
+	} else if team.Name == "" && len(team.Players) == 0 {
+		t.Error("team empty")
+	}
+}
+
+func TestFindManyTeams(t *testing.T) {
+	_, err := FindTeam(tournamentID, "The", &TeamInfo{})
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(team)
 }
 
 func TestFindInvalidTeam(t *testing.T) {
-	_, err := FindTeam(tournamentID, "Vixen Gaming")
+	var team TeamInfo
+	_, err := FindTeam(tournamentID, "ThisTeamDoesNotExist", &team)
 	if !strings.HasPrefix(err.Error(), "unable to find team") {
 		t.Error(err)
 	}

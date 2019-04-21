@@ -13,30 +13,37 @@ const (
 	cloudfront = "https://dtmwra1jsgyb0.cloudfront.net/"
 )
 
-// FindTeam returns info on a team in the given tournament, or an error if they aren't found
-func FindTeam(tournamentID, name string) (TeamInfo, error) {
+// FindTeam returns a list of team names found, or an error if none are found.
+// If only one team is found, the TeamInfo will be written to t.
+func FindTeam(tournamentID, name string, t *TeamInfo) ([]string, error) {
 	url := cloudfront + "tournaments/" + tournamentID + "/" + "teams?name=" + name
 	resp, err := http.Get(url)
 	if err != nil {
-		return TeamInfo{}, err
+		return []string{}, err
 	}
 	defer resp.Body.Close()
 
 	var teams []teamData
 	err = json.NewDecoder(resp.Body).Decode(&teams)
 	if err != nil {
-		return TeamInfo{}, err
+		return []string{}, err
 	}
 	if len(teams) == 0 {
-		return TeamInfo{}, fmt.Errorf("unable to find team \"%s\"", name)
+		return []string{}, fmt.Errorf("unable to find team \"%s\"", name)
+	} else if len(teams) == 1 {
+		info, err := getTeamInfo(teams[0])
+		if err != nil {
+			return []string{}, err
+		}
+		*t = info
+		return []string{info.Name}, nil
+	} else {
+		names := []string{}
+		for _, team := range teams {
+			names = append(names, team.Name)
+		}
+		return names, nil
 	}
-
-	info, err := getTeamInfo(teams[0])
-	if err != nil {
-		return TeamInfo{}, nil
-	}
-
-	return info, nil
 }
 
 // GetOtherTeam get information on the enemy team in a round of Open Division
@@ -151,6 +158,7 @@ type team struct {
 }
 
 type teamData struct {
+	Name      string   `json:"name"`
 	ActiveIDS []string `json:"playerIDs"`
 	PID       string   `json:"persistentTeamID"`
 	Players   []struct {
