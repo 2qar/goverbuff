@@ -142,6 +142,9 @@ func getPlayer(c *http.Client, btag string) (PlayerStats, error) {
 	validTag := strings.Replace(btag, "#", "-", 1)
 	resp, err := c.Get(fmt.Sprintf("https://www.overbuff.com/players/pc/%s", validTag))
 	if err != nil {
+		if strings.Index(err.Error(), "Client.Timeout exceeded") != -1 {
+			return PlayerStats{}, fmt.Errorf("player \"%s\" not found", btag)
+		}
 		return PlayerStats{}, err
 	} else if resp.StatusCode == 404 || resp.StatusCode == 408 {
 		return PlayerStats{}, fmt.Errorf("player \"%s\" not found", btag)
