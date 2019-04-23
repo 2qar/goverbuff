@@ -47,7 +47,7 @@ func FindTeam(tournamentID, name string, t *TeamInfo) ([]string, error) {
 }
 
 // GetOtherTeam get information on the enemy team in a round of Open Division
-func GetOtherTeam(tournamentLink, teamID string, round int) (e EnemyTeamInfo, err error) {
+func GetOtherTeam(tournamentLink, teamID string, round int) (e TeamInfo, err error) {
 	cutIndex := strings.LastIndex(tournamentLink, "/") + 1
 	stageID := tournamentLink[cutIndex:]
 
@@ -56,12 +56,12 @@ func GetOtherTeam(tournamentLink, teamID string, round int) (e EnemyTeamInfo, er
 		return
 	}
 
-	e.TeamInfo, err = getTeamInfo(m.Team().Info)
+	e, err = getTeamInfo(m.Team().Info)
 	if err != nil {
 		return
 	}
 
-	e.MatchLink = tournamentLink + "/match/" + m.ID
+	e.Link = tournamentLink + "/match/" + m.ID
 	return
 }
 
@@ -131,7 +131,7 @@ func getTeamInfo(t teamData) (TeamInfo, error) {
 		players = append(players, <-pCh)
 	}
 
-	return TeamInfo{pt.Name, pt.Logo, players}, nil
+	return TeamInfo{"https://www.battlefy.com/teams/" + t.PID, pt.Name, pt.Logo, players}, nil
 }
 
 type match struct {
@@ -199,15 +199,10 @@ func (p *player) Btag() string {
 
 // TeamInfo stores info about a team scraped from Battlefy, including stats about their players
 type TeamInfo struct {
+	Link    string
 	Name    string
 	Logo    string
 	Players []PlayerInfo
-}
-
-// EnemyTeamInfo stores TeamInfo in the context of a Battlefy match, storing the match link
-type EnemyTeamInfo struct {
-	MatchLink string
-	TeamInfo
 }
 
 // PlayerInfo stores info about a player in the context of a Battlefy team.

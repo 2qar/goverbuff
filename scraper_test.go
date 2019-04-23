@@ -41,7 +41,7 @@ func TestGetOtherTeam(t *testing.T) {
 	e, err := GetOtherTeam(tournamentLink, teamID, 1)
 	if err != nil {
 		t.Error(err)
-	} else if e.MatchLink == "" {
+	} else if e.Link == "" {
 		t.Error("no match link")
 	}
 }
