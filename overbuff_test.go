@@ -1,8 +1,23 @@
 package odscraper
 
 import (
+	"os"
 	"testing"
 )
+
+func TestParsePlayer(t *testing.T) {
+	f, err := os.Open("example_player")
+	if err != nil {
+		t.Error(err)
+	}
+
+	p := parsePlayer(f)
+	if p.SR != 3992 {
+		t.Errorf("%d != 3992", p.SR)
+	} else if r := p.GetMain(); r != "Offense" {
+		t.Errorf("%s != Offense", r)
+	}
+}
 
 func TestGetPlayer(t *testing.T) {
 	p, err := GetPlayer("Tydra#11863")
