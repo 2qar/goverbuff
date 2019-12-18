@@ -1,9 +1,16 @@
-package odscraper
+package goverbuff
 
 import (
+	"net/http"
 	"os"
 	"testing"
 )
+
+var client *http.Client
+
+func init() {
+	client = DefaultClient()
+}
 
 func TestParsePlayer(t *testing.T) {
 	f, err := os.Open("example_player")
@@ -14,13 +21,13 @@ func TestParsePlayer(t *testing.T) {
 	p := parsePlayer(f)
 	if p.SR != 3992 {
 		t.Errorf("%d != 3992", p.SR)
-	} else if r := p.GetMain(); r != "Offense" {
+	} else if r := p.Main(); r != "Offense" {
 		t.Errorf("%s != Offense", r)
 	}
 }
 
 func TestGetPlayer(t *testing.T) {
-	p, err := GetPlayer("Tydra#11863")
+	p, err := GetPlayer(client, "Tydra#11863")
 	if err != nil {
 		t.Error(err)
 	} else if p.SR == 0 {
@@ -29,14 +36,14 @@ func TestGetPlayer(t *testing.T) {
 }
 
 func TestGetInvalidPlayer(t *testing.T) {
-	_, err := GetPlayer("ogdog")
+	_, err := GetPlayer(client, "ogdog")
 	if err.Error() != "invalid btag" {
 		t.Error("invalid btag somehow worked")
 	}
 }
 
 func TestGetPlayerNoSR(t *testing.T) {
-	p, err := GetPlayer("OGDog#1515")
+	p, err := GetPlayer(client, "OGDog#1515")
 	if err != nil {
 		t.Error(err)
 	} else if p.SR != -1 {
@@ -45,17 +52,17 @@ func TestGetPlayerNoSR(t *testing.T) {
 }
 
 func TestGetPlayerMain(t *testing.T) {
-	p, err := GetPlayer("OGDog#1515")
+	p, err := GetPlayer(client, "OGDog#1515")
 	if err != nil {
 		t.Error(err)
-	} else if p.GetMain() != "Defense" {
-		t.Error("wrong main")
+	} else if m := p.Main(); m != "Defense" {
+		t.Errorf("wrong main: %q != %q", m, "Defense")
 	}
 }
 
 func TestGetFakePlayer(t *testing.T) {
-	_, err := GetPlayer("TheresNoWayAnybodyHasThisName#1234")
+	_, err := GetPlayer(client, "TheresNoWayAnybodyHasThisName#1234")
 	if !IsNotFound(err) {
-		t.Error(err)
+		t.Errorf("not a NotFound error: %s", err)
 	}
 }

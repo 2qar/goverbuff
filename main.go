@@ -1,4 +1,4 @@
-package odscraper
+package goverbuff
 
 import (
 	"errors"
@@ -9,18 +9,22 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
-// PlayerStats stores info on a player scraped from Overbuff
-type PlayerStats struct {
+// Timeout is the timeout for the client returned by DefaultClient().
+const Timeout = 5
+
+// Player stores player stats scraped from Overbuff.
+type Player struct {
 	BTag  string
 	SR    int
 	Roles map[string]int
 }
 
-// GetMain returns a player's main role.
+// Main returns a player's main role.
 // A player's main role here is the role they have the most wins on.
-func (p *PlayerStats) GetMain() string {
+func (p *Player) Main() string {
 	var topRole string
 	var topWins int
 	for role, wins := range p.Roles {
@@ -65,7 +69,7 @@ func parseRole(tokenizer *html.Tokenizer, roles map[string]int) {
 	}
 }
 
-func parsePlayer(r io.Reader) (p PlayerStats) {
+func parsePlayer(r io.Reader) (p Player) {
 	tokenizer := html.NewTokenizer(r)
 
 	var sr string
@@ -94,6 +98,7 @@ func parsePlayer(r io.Reader) (p PlayerStats) {
 					}
 				}
 			} else if t.Data == "section" { // check for roles
+				// FIXME: overbuff html changed and role parsing is broken now
 				for i := 0; i < 2; i++ {
 					tt = tokenizer.Next()
 				}
@@ -129,41 +134,38 @@ func parsePlayer(r io.Reader) (p PlayerStats) {
 	return
 }
 
+// DefaultClient returns a client with a reasonable timeout.
+func DefaultClient() *http.Client {
+	return &http.Client{Timeout: time.Duration(Timeout) * time.Second}
+}
+
 // IsNotFound checks if an error produced by GetPlayer is a 404 error
 func IsNotFound(err error) bool {
 	return strings.HasPrefix(err.Error(), "player \"")
 }
 
-func getPlayer(c *http.Client, btag string) (PlayerStats, error) {
+// GetPlayer returns player stats scraped from Overbuff.
+//
+// Using http.DefaultClient isn't recommended because it has no timeout set;
+// use goverbuff.DefaultClient() or create a client with a sane timeout.
+func GetPlayer(c *http.Client, btag string) (Player, error) {
 	if match, _ := regexp.MatchString("\\w{1,}#\\d{3,5}", btag); !match {
-		return PlayerStats{}, errors.New("invalid btag")
+		return Player{}, errors.New("invalid btag")
 	}
 
 	validTag := strings.Replace(btag, "#", "-", 1)
 	resp, err := c.Get(fmt.Sprintf("https://www.overbuff.com/players/pc/%s", validTag))
 	if err != nil {
 		if strings.Index(err.Error(), "Client.Timeout exceeded") != -1 {
-			return PlayerStats{}, fmt.Errorf("player \"%s\" not found", btag)
+			return Player{}, fmt.Errorf("player \"%s\" not found", btag)
 		}
-		return PlayerStats{}, err
+		return Player{}, err
 	} else if resp.StatusCode == 404 || resp.StatusCode == 408 {
-		return PlayerStats{}, fmt.Errorf("player \"%s\" not found", btag)
+		return Player{}, fmt.Errorf("player \"%s\" not found", btag)
 	}
 	defer resp.Body.Close()
 
 	p := parsePlayer(resp.Body)
 	p.BTag = btag
 	return p, nil
-}
-
-// GetPlayer returns stats on a player scraped from Overbuff
-func GetPlayer(btag string) (p PlayerStats, err error) {
-	p, err = getPlayer(saneClient(), btag)
-	return
-}
-
-// CGetPlayer functions the same as GetPlayer, but it takes also takes an http.Client
-func CGetPlayer(c *http.Client, btag string) (p PlayerStats, err error) {
-	p, err = getPlayer(c, btag)
-	return
 }
