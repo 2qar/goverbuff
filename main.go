@@ -104,7 +104,7 @@ func parsePlayer(r io.Reader) (p Player) {
 				}
 				if tt == html.TextToken {
 					t = tokenizer.Token()
-					if t.Data == "Roles" {
+					if t.Data == "Role Stats" {
 						for {
 							tt = tokenizer.Next()
 
